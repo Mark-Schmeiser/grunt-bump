@@ -72,7 +72,7 @@ module.exports = function(grunt) {
 
     var globalVersion; // when bumping multiple files
     var gitVersion;    // when bumping using `git describe`
-    var VERSION_REGEXP = /([\'|\"]?version[\'|\"]?[ ]*[:|=][ ]*[\'|\"]?)([\d||A-a|.|-]*)([\'|\"]?)/i;
+    var VERSION_REGEXP = /((version[ ]*[=][ ]*[\"]?)([\d||A-a|.|-]*)([\"]?)>+|([\'|\"]?version[\'|\"]?[ ]*[:][ ]*[\'|\"]?)([\d||A-a|.|-]*)([\'|\"]?))/i;
 
 
     if (opts.globalReplace) {
@@ -97,10 +97,19 @@ module.exports = function(grunt) {
     runIf(opts.bumpVersion, function(){
       grunt.file.expand(opts.files).forEach(function(file, idx) {
         var version = null;
-        var content = grunt.file.read(file).replace(VERSION_REGEXP, function(match, prefix, parsedVersion, suffix) {
-          gitVersion = gitVersion && parsedVersion + '-' + gitVersion;
-          version = exactVersionToSet || gitVersion || semver.inc(parsedVersion, versionType || 'patch');
-          return prefix + version + suffix;
+        var content = grunt.file.read(file).replace(VERSION_REGEXP, function (matchAll, match, prefixXml, parsedVersionXml, suffixXml, prefixJson, parsedVersionJson, suffixJson) {
+          // either to version for json or xml is set. We need to handle it slightly different
+          if (parsedVersionJson) {
+            gitVersion = gitVersion && parsedVersionJson + '-' + gitVersion;
+            version = exactVersionToSet || gitVersion || semver.inc(parsedVersionJson, versionType || 'patch');
+            return prefixJson + version + suffixJson;
+          } else {
+            gitVersion = gitVersion && parsedVersionXml + '-' + gitVersion;
+            version = exactVersionToSet || gitVersion || semver.inc(parsedVersionXml, versionType || 'patch');
+            // the xml regex will look up for the version="a.b.c"> 
+            // the > is missing in the suffix, so we need to add it here
+            return prefixXml + version + suffixXml + ">";
+          }
         });
 
         if (!version) {
