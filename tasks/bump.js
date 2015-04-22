@@ -117,7 +117,7 @@ module.exports = function(grunt) {
         }
 
         grunt.file.write(file, content);
-        grunt.log.ok('Version bumped to ' + version + (opts.files.length > 1 ? ' (in ' + file + ')' : ''));
+        grunt.log.ok('Version kzk-bumped to ' + version + (opts.files.length > 1 ? ' (in ' + file + ')' : ''));
 
         if (!globalVersion) {
           globalVersion = version;
